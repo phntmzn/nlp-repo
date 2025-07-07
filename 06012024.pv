@@ -1,0 +1,71 @@
+import nltk
+from collections import defaultdict
+import heapq
+
+# Ensure you have the required NLTK resources
+nltk.download('punkt')
+
+class RestlessSleepersTrackerNLTK:
+    def __init__(self, k):
+        self.k = k
+        self.word_frequency_history = defaultdict(list)
+    
+    def update(self, text):
+        """
+        Update the word frequency history with the latest text.
+        
+        :param text: A string representing the text at the current time step.
+        """
+        # Tokenize the text and get word frequency distribution
+        tokens = nltk.word_tokenize(text.lower())
+        freq_dist = nltk.FreqDist(tokens)
+        
+        # Update the history of word frequencies
+        for word in freq_dist:
+            self.word_frequency_history[word].append(freq_dist[word])
+    
+    def compute_restlessness(self):
+        """
+        Compute the restlessness of each word based on the changes in its frequency.
+        
+        :return: A dictionary with words as keys and their restlessness as values.
+        """
+        restlessness = {}
+        for word, history in self.word_frequency_history.items():
+            if len(history) > 1:
+                # Compute restlessness as the sum of absolute changes in frequency
+                restlessness[word] = sum(abs(history[i] - history[i-1]) for i in range(1, len(history)))
+            else:
+                restlessness[word] = 0
+        return restlessness
+    
+    def get_top_k_restless_sleepers(self):
+        """
+        Get the top-k restless sleepers based on their computed restlessness.
+        
+        :return: A list of tuples (word, restlessness) for the top-k restless sleepers.
+        """
+        restlessness = self.compute_restlessness()
+        # Use a heap to get the top-k restless words efficiently
+        top_k = heapq.nlargest(self.k, restlessness.items(), key=lambda x: x[1])
+        return top_k
+
+# Example usage
+tracker = RestlessSleepersTrackerNLTK(k=3)
+
+# Simulating text inputs over different time steps
+text_t1 = "This is a test. This test is only a test."
+text_t2 = "This is another test. Test your code with another example."
+text_t3 = "The test is done. This example has another test."
+
+# Update tracker with new texts
+tracker.update(text_t1)
+tracker.update(text_t2)
+tracker.update(text_t3)
+
+# Get the top-k restless sleepers
+top_k_restless_sleepers = tracker.get_top_k_restless_sleepers()
+
+print("Top-k restless sleepers:")
+for word, restlessness in top_k_restless_sleepers:
+    print(f"{word}: {restlessness}")
